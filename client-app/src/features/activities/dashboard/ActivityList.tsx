@@ -1,17 +1,12 @@
-import React, { SyntheticEvent } from 'react'
+import React, { SyntheticEvent, useContext } from 'react'
 import { Item, Button, Label, Segment } from 'semantic-ui-react'
-import { IActivity } from '../../../app/models/activity'
+import ActivityStore from '../../../app/stores/activityStore'
+import { observer } from 'mobx-react-lite'
 
-interface IProps {
-    activities: IActivity[],
-    selectActivity: (id: string) => void,
-    deleteActivity: (e: SyntheticEvent<HTMLButtonElement>, activity: IActivity) => void,
-    submitting: boolean,
-    target: string
-}
+const ActivityList: React.FC = () => {
 
-const ActivityList: React.FC<IProps> = ({activities, selectActivity, deleteActivity, submitting, target}) => {
-
+    const activityStore = useContext(ActivityStore);
+    const {activitiesByDate: activities, selectActivity, deleteActivity, submitting} = activityStore;
     return (
         <Segment clearing>
             <Item.Group divided>
@@ -28,7 +23,9 @@ const ActivityList: React.FC<IProps> = ({activities, selectActivity, deleteActiv
                                 <Item.Extra>    
                                     <Button onClick={() => {selectActivity(activity.id)}} 
                                             content="View" color="blue" floated="right" />
-                                    <Button name={activity.id} loading={target === activity.id && submitting} onClick={(e: SyntheticEvent<HTMLButtonElement>) => deleteActivity(e, activity)} 
+                                    <Button name={activity.id} 
+                                            loading={activityStore.target === activity.id && submitting} 
+                                            onClick={(e: SyntheticEvent<HTMLButtonElement>) => deleteActivity(e, activity.id)} 
                                             content="Delete" color="red" floated="right" />
                                     <Label basic content={activity.category} />
                                 </Item.Extra>
@@ -45,4 +42,4 @@ const ActivityList: React.FC<IProps> = ({activities, selectActivity, deleteActiv
     )
 }
 
-export default ActivityList
+export default observer(ActivityList)
