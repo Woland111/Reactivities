@@ -1,46 +1,31 @@
-import React, { SyntheticEvent, useContext } from 'react'
-import { Item, Button, Label, Segment } from 'semantic-ui-react'
-import ActivityStore from '../../../app/stores/activityStore'
-import { observer } from 'mobx-react-lite'
-import { Link } from 'react-router-dom'
+import React, { useContext, Fragment } from "react";
+import { Item, Label } from "semantic-ui-react";
+import ActivityStore from "../../../app/stores/activityStore";
+import { observer } from "mobx-react-lite";
+import ActivityListItem from "./ActivityListItem";
+import { IActivity } from "../../../app/models/activity";
 
 const ActivityList: React.FC = () => {
-
-    const activityStore = useContext(ActivityStore);
-    const {activitiesByDate: activities, deleteActivity, submitting} = activityStore;
-    return (
-        <Segment clearing>
+  const activityStore = useContext(ActivityStore);
+  const { activitiesByDate: activities } = activityStore;
+  return (
+    <Fragment>
+      {activities.map(([group, activities]) => (
+        <Fragment key={group}>
+          <Label size="large" color="green">
+            {group}
+          </Label>
             <Item.Group divided>
-                {activities.map((activity) => {
-                    return (
-                        <Item key={activity.id}>
-                            <Item.Content>
-                                <Item.Header as='a'>{activity.title}</Item.Header>
-                                <Item.Meta>{activity.date}</Item.Meta>
-                                <Item.Description>
-                                    <div>{activity.description}</div>
-                                    <div>{activity.city}, {activity.venue}</div>
-                                </Item.Description>
-                                <Item.Extra>    
-                                    <Button as={Link} to={`/activities/${activity.id}`} 
-                                            content="View" color="blue" floated="right" />
-                                    <Button name={activity.id} 
-                                            loading={activityStore.target === activity.id && submitting} 
-                                            onClick={(e: SyntheticEvent<HTMLButtonElement>) => deleteActivity(e, activity.id)} 
-                                            content="Delete" color="red" floated="right" />
-                                    <Label basic content={activity.category} />
-                                </Item.Extra>
-                            </Item.Content>
-                            </Item>
-                    )
-                })}
-                
-
+              {activities.map((activity: IActivity) => {
+                return (
+                  <ActivityListItem key={activity.id} activity={activity} />
+                );
+              })}
             </Item.Group>
+        </Fragment>
+      ))}
+    </Fragment>
+  );
+};
 
-        </Segment>
-        
-    )
-}
-
-export default observer(ActivityList)
+export default observer(ActivityList);
