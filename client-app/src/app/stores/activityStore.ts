@@ -32,7 +32,6 @@ class ActivityStore {
       },
       {} as { [key: string]: IActivity[] }
     );
-    console.log(obj);
     return Object.entries(obj);
   }
 
@@ -47,9 +46,7 @@ class ActivityStore {
         });
         this.loadingInitial = false;
       });
-      console.log(this.groupActivitiesByDate(activities));
     } catch (error) {
-      console.log(error);
       runInAction("load activities error", () => {
         this.loadingInitial = false;
       });
