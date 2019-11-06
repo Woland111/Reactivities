@@ -2,6 +2,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Errors;
+using Application.Interfaces;
 using Domain;
 using FluentValidation;
 using MediatR;
@@ -16,7 +17,7 @@ namespace Application.User
             public string Email { get; set; }
 
             public string Password { get; set; }
-            
+
         }
 
         public class QueryValidator : AbstractValidator<Query>
@@ -32,11 +33,15 @@ namespace Application.User
         {
             private readonly UserManager<AppUser> _userManager;
             private readonly SignInManager<AppUser> _signInManager;
+            private readonly IJwtGenerator _jwtGenerator;
 
-            public Handler(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+            public Handler(UserManager<AppUser> userManager,
+                            SignInManager<AppUser> signInManager,
+                            IJwtGenerator jwtGenerator)
             {
-                this._userManager = userManager;
-                this._signInManager = signInManager;
+                _jwtGenerator = jwtGenerator;
+                _userManager = userManager;
+                _signInManager = signInManager;
             }
 
             public async Task<User> Handle(Query request, CancellationToken cancellationToken)
@@ -52,7 +57,7 @@ namespace Application.User
                     return new User
                     {
                         DisplayName = user.DisplayName,
-                        Token = "Token to be generated",
+                        Token = _jwtGenerator.CreateToken(user),
                         Username = user.UserName,
                         Image = null
                     };

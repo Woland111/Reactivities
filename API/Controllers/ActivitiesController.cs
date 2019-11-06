@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Application.Activities;
 using Domain;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -11,6 +12,7 @@ namespace API.Controllers
     public class ActivitiesController : BaseController
     {
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<List<Activity>>> List()
         {
             return await Mediator.Send(new List.Query());
