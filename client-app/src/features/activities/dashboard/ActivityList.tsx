@@ -4,10 +4,11 @@ import ActivityStore from "../../../app/stores/activityStore";
 import { observer } from "mobx-react-lite";
 import ActivityListItem from "./ActivityListItem";
 import { IActivity } from "../../../app/models/activity";
+import { RootStoreContext } from "../../../app/stores/rootStore";
 
 const ActivityList: React.FC = () => {
-  const activityStore = useContext(ActivityStore);
-  const { activitiesByDate: activities } = activityStore;
+  const rootStore = useContext(RootStoreContext);
+  const { activitiesByDate: activities } = rootStore.activityStore;
   return (
     <Fragment>
       {activities.map(([group, activities]) => (

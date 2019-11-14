@@ -18,6 +18,7 @@ import {
   composeValidators,
   hasLengthGreaterThan
 } from "revalidate";
+import { RootStoreContext } from "../../../app/stores/rootStore";
 
 const validate = combineValidators({
   title: isRequired({ message: "Event title is required" }),
@@ -42,13 +43,13 @@ const ActivityForm: React.FC<RouteComponentProps<ActivityFormProps>> = ({
   match,
   history
 }) => {
-  const activityStore = useContext(ActivityStore);
+  const rootStore = useContext(RootStoreContext);
   const {
     createActivity,
     updateActivity,
     submitting,
     loadActivity
-  } = activityStore;
+  } = rootStore.activityStore;
 
   const [activity, setActivity] = useState(new ActivityFormValues());
   const [loading, setLoading] = useState(false);

@@ -1,6 +1,6 @@
 import ActivityStore from "./activityStore";
 import UserStore from "./userStore";
-import { createContext } from "vm";
+import { createContext } from "react";
 
 export class RootStore {
     activityStore: ActivityStore;
@@ -12,4 +12,4 @@ export class RootStore {
     }
 }
 
-export const RootContext = createContext(new RootStore())
+export const RootStoreContext = createContext(new RootStore())
