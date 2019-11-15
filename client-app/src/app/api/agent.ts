@@ -19,7 +19,7 @@ axios.interceptors.response.use(undefined, error => {
   } else if (status === 500) {
     toast.error("Uuuggh");
   }
-  throw error;
+  throw error.response;
 });
 
 const responseBody = (response: AxiosResponse) => response.data;
