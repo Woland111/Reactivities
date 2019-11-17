@@ -35,4 +35,24 @@ export default class UserStore {
     this.rootStore.commonStore.setToken(null);
     history.push("/")
   }
+
+  @action getUser = async () => {
+    try {
+      var result = await agent.User.current();
+      runInAction(() => {
+        this.user = result;
+      })
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @action register = async (values: IUserFormValues) => {
+    try {
+      var result = await agent.User.register(values);
+      
+    } catch (error) {
+      throw error;
+    }
+  }
 }
