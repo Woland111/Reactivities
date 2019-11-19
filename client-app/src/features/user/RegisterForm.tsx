@@ -28,7 +28,6 @@ const RegisterForm = () => {
       render={({
         handleSubmit,
         submitting,
-        form,
         submitError,
         invalid,
         pristine,
@@ -37,7 +36,7 @@ const RegisterForm = () => {
         <Form onSubmit={handleSubmit} error>
           <Header
             as="h2"
-            content="Login to Reactivities"
+            content="Register to Reactivities"
             color="teal"
             textAlign="center"
           />
@@ -57,7 +56,6 @@ const RegisterForm = () => {
           {submitError && !dirtySinceLastSubmit && (
             <ErrorMessage
               error={submitError}
-              text="Invalid e-mail or password"
             />
           )}
           <Button
