@@ -26,6 +26,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using AutoMapper;
 
 namespace API
 {
@@ -51,6 +52,7 @@ namespace API
             services.AddDbContext<DataContext>(opt =>
             {
                 opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
+                opt.UseLazyLoadingProxies();
             });
             services.AddCors(opt =>
             {
@@ -60,11 +62,18 @@ namespace API
                 });
             });
             services.AddMediatR(typeof(List.Handler).Assembly);
+            services.AddAutoMapper(typeof(List.Handler));
             var builder = services.AddIdentityCore<AppUser>();
             var identityBuilder = new IdentityBuilder(builder.UserType, builder.Services);
             identityBuilder.AddEntityFrameworkStores<DataContext>();
             identityBuilder.AddSignInManager<SignInManager<AppUser>>();
 
+            services.AddAuthorization(opt => 
+            {
+                opt.AddPolicy("IsHostPolicy", p => {
+                    p.Requirements.Add(new IsHostRequirement());
+                });
+            });
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(opt =>

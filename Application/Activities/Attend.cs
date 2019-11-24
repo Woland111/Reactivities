@@ -1,0 +1,58 @@
+using System;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using Application.Errors;
+using Application.Interfaces;
+using Domain;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Persistence;
+
+namespace Application.Activities
+{
+    public class Attend
+    {
+        public class Command : IRequest
+        {
+            public Guid Id { get; set; }
+        }
+
+        public class Handler : IRequestHandler<Command>
+        {
+            private readonly DataContext _context;
+            private readonly IUserAccessor _userAccessor;
+            public Handler(DataContext context, IUserAccessor userAccessor)
+            {
+                _userAccessor = userAccessor;
+                _context = context;
+            }
+
+            public async Task<Unit> Handle(Command request, CancellationToken cancellationToken)
+            {
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.UserName == _userAccessor.GetCurrentUsername());
+                var activity = await _context.Activities.FindAsync(request.Id);
+                if (activity == null)
+                {
+                    throw new RestException(HttpStatusCode.NotFound, new { Activity = "Could not find activity" });
+                }
+                var attendance = await _context.UserActivity.SingleOrDefaultAsync(ua => ua.ActivityId == activity.Id && ua.AppUserId == user.Id);
+                if (attendance != null) 
+                {
+                    throw new RestException(HttpStatusCode.BadRequest, new { Attendance = "Already attending this activity." });
+                }
+                var userActivity = new UserActivity
+                {
+                    AppUser = user,
+                    Activity = activity,
+                    IsHost = false,
+                    DateJoined = DateTime.Now
+                };
+                _context.UserActivity.Add(userActivity);
+                var success = await _context.SaveChangesAsync() > 0;
+                if (success) return Unit.Value;
+                throw new Exception("Problem attending activity.");
+            }
+        }
+    }
+}

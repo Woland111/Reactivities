@@ -1,9 +1,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Application.Interfaces;
 using Domain;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Persistence;
 
 namespace Application.Activities
@@ -43,9 +46,13 @@ namespace Application.Activities
         public class Handler : IRequestHandler<Command>
         {
             private readonly DataContext _context;
+            private readonly IUserAccessor _userAccessor;
+            private readonly UserManager<AppUser> _userManager;
 
-            public Handler(DataContext context)
+            public Handler(DataContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager)
             {
+                _userManager = userManager;
+                _userAccessor = userAccessor;
                 _context = context;
             }
 
@@ -62,6 +69,15 @@ namespace Application.Activities
                     Venue = request.Venue
                 };
                 _context.Activities.Add(activity);
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.UserName == _userAccessor.GetCurrentUsername());
+                var userActivity = new UserActivity
+                {
+                    AppUser = user,
+                    Activity = activity,
+                    IsHost = true,
+                    DateJoined = DateTime.Now
+                };
+                _context.UserActivity.Add(userActivity);
                 var success = await _context.SaveChangesAsync() > 0;
                 if (success) return Unit.Value;
                 throw new Exception("Problem creating activity.");
