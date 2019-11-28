@@ -7,7 +7,6 @@ import { toast } from "react-toastify";
 import { RootStore } from "./rootStore";
 
 export default class ActivityStore {
-
   rootStore: RootStore;
 
   constructor(rootStore: RootStore) {
@@ -30,26 +29,30 @@ export default class ActivityStore {
     const sortedActivities = activities.sort(
       (a, b) => a.date.getTime() - b.date.getTime()
     );
-    const obj = sortedActivities.reduce(
-      (activities, activity) => {
-        const date = activity.date.toISOString().split("T")[0];
-        activities[date] = activities[date]
-          ? [...activities[date], activity]
-          : [activity];
-        return activities;
-      },
-      {} as { [key: string]: IActivity[] }
-    );
+    const obj = sortedActivities.reduce((activities, activity) => {
+      const date = activity.date.toISOString().split("T")[0];
+      activities[date] = activities[date]
+        ? [...activities[date], activity]
+        : [activity];
+      return activities;
+    }, {} as { [key: string]: IActivity[] });
     return Object.entries(obj);
   }
 
   @action loadActivities = async () => {
     this.loadingInitial = true;
+    const user = this.rootStore.userStore.user!;
     try {
       const activities = await agent.Activities.list();
       runInAction("loading activities", () => {
         activities.forEach(activity => {
           activity.date = new Date(activity.date);
+          activity.isGoing = activity.attendees.some(
+            a => a.username === user.username
+          );
+          activity.isHost = activity.attendees.some(
+            a => a.username === user.username && a.isHost
+          );
           this.activitiesRegistry.set(activity.id, activity);
         });
         this.loadingInitial = false;
@@ -62,7 +65,8 @@ export default class ActivityStore {
   };
 
   @action loadActivity = async (id: string) => {
-    let activity = this.getActivity(id);
+    const user = this.rootStore.userStore.user!;
+    let activity: IActivity = this.getActivity(id);
     if (activity) {
       this.activity = activity;
       return activity;
@@ -72,6 +76,8 @@ export default class ActivityStore {
         activity = await agent.Activities.details(id);
         runInAction("getting activity", () => {
           activity.date = new Date(activity.date);
+          activity.isGoing = activity.attendees.some(a => a.username === user.username);
+          activity.isHost  = activity.attendees.some(a => a.username === user.username && a.isHost);
           this.activity = activity;
           this.activitiesRegistry.set(activity.id, activity);
         });
@@ -101,7 +107,7 @@ export default class ActivityStore {
       runInAction("creating activity", () => {
         this.activitiesRegistry.set(activity.id, activity);
       });
-      history.push(`/activities/${activity.id}`)
+      history.push(`/activities/${activity.id}`);
     } catch (error) {
       toast.error("Problem submitting data.");
       console.log(error.response);
@@ -120,7 +126,7 @@ export default class ActivityStore {
         this.activitiesRegistry.set(activity.id, activity);
         this.activity = activity;
       });
-      history.push(`/activities/${activity.id}`)
+      history.push(`/activities/${activity.id}`);
     } catch (error) {
       toast.error("Problem submitting data.");
       console.log(error.response);
@@ -152,4 +158,3 @@ export default class ActivityStore {
     }
   };
 }
-

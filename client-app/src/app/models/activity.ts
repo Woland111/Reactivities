@@ -1,3 +1,10 @@
+export interface IAttendee {
+    username: string,
+    displayName: string,
+    image: string,
+    isHost: boolean
+}
+
 export interface IActivity {
     id: string,
     title: string,
@@ -5,7 +12,10 @@ export interface IActivity {
     category: string,
     date: Date,
     city: string,
-    venue: string
+    venue: string,
+    isHost: boolean,
+    isGoing: boolean,
+    attendees: IAttendee[]
 }
 
 export interface IActivityFormValues extends Partial<IActivity> {
