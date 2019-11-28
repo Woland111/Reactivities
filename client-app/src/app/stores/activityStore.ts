@@ -5,6 +5,7 @@ import agent from "../api/agent";
 import { history } from "../..";
 import { toast } from "react-toastify";
 import { RootStore } from "./rootStore";
+import { setActivityProps, createAttendee } from "../common/form/util/util";
 
 export default class ActivityStore {
   rootStore: RootStore;
@@ -16,6 +17,7 @@ export default class ActivityStore {
   @observable target: string = "";
   @observable activitiesRegistry = new Map();
   @observable loadingInitial: boolean = false;
+  @observable loading: boolean = false;
   @observable activity: IActivity | undefined;
   @observable submitting = false;
 
@@ -75,9 +77,7 @@ export default class ActivityStore {
       try {
         activity = await agent.Activities.details(id);
         runInAction("getting activity", () => {
-          activity.date = new Date(activity.date);
-          activity.isGoing = activity.attendees.some(a => a.username === user.username);
-          activity.isHost  = activity.attendees.some(a => a.username === user.username && a.isHost);
+          setActivityProps(activity, user);
           this.activity = activity;
           this.activitiesRegistry.set(activity.id, activity);
         });
@@ -155,6 +155,50 @@ export default class ActivityStore {
         this.submitting = false;
         this.target = "";
       });
+    }
+  };
+
+  @action attendActivity = async () => {
+    this.loading = true;
+    try {
+      await agent.Activities.attend(this.activity!.id);
+      runInAction(() => {
+        const user = this.rootStore.userStore.user;
+        const attendee = createAttendee(user!);
+        if (this.activity) {
+          this.activity.attendees.push(attendee);
+          this.activity.isGoing = true;
+          this.activitiesRegistry.set(this.activity.id, this.activity);
+        }
+      });
+    } catch (error) {
+      toast.error("Problem when attending activity");
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      })
+    }
+  };
+
+  @action cancelAttendance = async () => {
+    this.loading = true;
+    try {
+      await agent.Activities.notattend(this.activity!.id);
+      runInAction(() => {
+        if (this.activity) {
+          this.activity.attendees = this.activity.attendees.filter(
+            a => a.username !== this.rootStore.userStore.user!.username
+          );
+          this.activity.isGoing = false;
+          this.activitiesRegistry.set(this.activity.id, this.activity);
+        }
+      });
+    } catch (error) {
+      toast.error("Problem when cancelling attendance");
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      })
     }
   };
 }
