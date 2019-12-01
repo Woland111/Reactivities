@@ -1,5 +1,5 @@
 import { RootStore } from "./rootStore";
-import { observable, runInAction, action } from "mobx";
+import { observable, runInAction, action, computed } from "mobx";
 import { IProfile } from "../models/profile";
 import agent from "../api/agent";
 import { thisExpression } from "@babel/types";
@@ -12,6 +12,14 @@ export default class ProfileStore {
 
   @observable profile: IProfile | null = null;
   @observable loadingProfile = true;
+
+  @computed get isCurrentUser() {
+    if (this.rootStore.userStore.user && this.profile) {
+      return this.rootStore.userStore.user.username === this.profile.username;
+    } else {
+      return false;
+    }
+  }
 
   @action loadProfile = async (username: string) => {
     this.loadingProfile = true;
