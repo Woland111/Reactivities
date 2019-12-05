@@ -1,8 +1,9 @@
 import { RootStore } from "./rootStore";
 import { observable, runInAction, action, computed } from "mobx";
-import { IProfile } from "../models/profile";
+import { IProfile, IPhoto } from "../models/profile";
 import agent from "../api/agent";
 import { thisExpression } from "@babel/types";
+import { toast } from "react-toastify";
 
 export default class ProfileStore {
   rootStore: RootStore;
@@ -12,6 +13,8 @@ export default class ProfileStore {
 
   @observable profile: IProfile | null = null;
   @observable loadingProfile = true;
+  @observable uploadingPhoto = false;
+  @observable loading = false;
 
   @computed get isCurrentUser() {
     if (this.rootStore.userStore.user && this.profile) {
@@ -27,12 +30,72 @@ export default class ProfileStore {
       var profile = await agent.Profiles.get(username);
       runInAction(() => {
         this.profile = profile;
-      })
+      });
     } catch (error) {
       console.log(error);
     } finally {
       runInAction(() => {
         this.loadingProfile = false;
+      });
+    }
+  };
+
+  @action uploadPhoto = async (file: Blob) => {
+    this.uploadingPhoto = true;
+    try {
+      const photo = await agent.Profiles.uploadPhoto(file);
+      runInAction(() => {
+        if (this.profile) {
+          this.profile.photos.push(photo);
+          if (photo.isMain && this.rootStore.userStore.user) {
+            this.profile.image = photo.url;
+            this.rootStore.userStore.user.image = photo.url;
+          }
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("Problem uploading photo.");
+    } finally {
+      runInAction(() => {
+        this.uploadingPhoto = false;
+      });
+    }
+  };
+
+  @action setMainImage = async (photo: IPhoto) => {
+    this.loading = true;
+    try {
+      await agent.Profiles.setMainImage(photo.id);
+      runInAction(() => {
+        this.rootStore.userStore.user!.image = photo.url;
+        this.profile!.photos.find(p => p.isMain)!.isMain = false;
+        this.profile!.photos.find(p => p.id === photo.id)!.isMain = true;
+        this.profile!.image = photo.url;
+      })
+    } catch (error) {
+      console.log(error);
+      toast.error("Problem setting main photo.");
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      })
+    }
+  }
+
+  @action deletePhoto = async (id: string) => {
+    this.uploadingPhoto = true;
+    try {
+      await agent.Profiles.delete(id);
+      runInAction(() => {
+
+      })
+    } catch (error) {
+      console.log(error);
+      toast.error("Problem setting main photo.");
+    } finally {
+      runInAction(() => {
+        this.uploadingPhoto = false;
       })
     }
   }
