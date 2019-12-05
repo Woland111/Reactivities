@@ -4,6 +4,7 @@ import { IProfile, IPhoto } from "../models/profile";
 import agent from "../api/agent";
 import { thisExpression } from "@babel/types";
 import { toast } from "react-toastify";
+import { SyntheticEvent } from "react";
 
 export default class ProfileStore {
   rootStore: RootStore;
