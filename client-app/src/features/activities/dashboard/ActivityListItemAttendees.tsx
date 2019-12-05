@@ -1,4 +1,4 @@
-import React, { Fragment } from "react";
+import React from "react";
 import { IAttendee } from "../../../app/models/activity";
 import { List, Image, Popup } from "semantic-ui-react";
 

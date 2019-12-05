@@ -2,8 +2,6 @@ import React, { useContext, Fragment } from "react";
 import { Container, Segment, Header, Button, Image } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { RootStoreContext } from "../../app/stores/rootStore";
-import { toJS } from "mobx";
-import ModalContainer from "../../app/common/modals/ModalContainer";
 import LoginForm from "../user/LoginForm";
 import RegisterForm from "../user/RegisterForm";
 

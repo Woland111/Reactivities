@@ -1,7 +1,6 @@
 import React, { useContext, Fragment } from "react";
 import { Modal } from "semantic-ui-react";
 import { RootStoreContext } from "../../stores/rootStore";
-import { observe } from "mobx";
 import { observer } from "mobx-react-lite";
 
 const ModalContainer = () => {

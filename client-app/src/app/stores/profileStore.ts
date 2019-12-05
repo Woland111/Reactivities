@@ -2,9 +2,7 @@ import { RootStore } from "./rootStore";
 import { observable, runInAction, action, computed } from "mobx";
 import { IProfile, IPhoto } from "../models/profile";
 import agent from "../api/agent";
-import { thisExpression } from "@babel/types";
 import { toast } from "react-toastify";
-import { SyntheticEvent } from "react";
 
 export default class ProfileStore {
   rootStore: RootStore;
@@ -84,19 +82,19 @@ export default class ProfileStore {
     }
   }
 
-  @action deletePhoto = async (id: string) => {
-    this.uploadingPhoto = true;
+  @action deletePhoto = async (photo: IPhoto) => {
+    this.loading = true;
     try {
-      await agent.Profiles.delete(id);
+      await agent.Profiles.delete(photo.id);
       runInAction(() => {
-
+        this.profile!.photos = this.profile!.photos.filter(p => p.id !== photo.id);
       })
     } catch (error) {
       console.log(error);
-      toast.error("Problem setting main photo.");
+      toast.error("Problem deleting a photo.");
     } finally {
       runInAction(() => {
-        this.uploadingPhoto = false;
+        this.loading = false;
       })
     }
   }

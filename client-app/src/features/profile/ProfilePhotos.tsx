@@ -17,6 +17,7 @@ const ProfilePhotos = () => {
   } = rootStore.profileStore;
   const [addPhotoMode, setAddPhotoMode] = useState(true);
   const [target, setTarget] = useState<string | undefined>(undefined);
+  const [targetDelete, setTargetDelete] = useState<string | undefined>(undefined);
 
   const handleUploadImage = (file: Blob) => {
     uploadPhoto(file).then(() => setAddPhotoMode(false));
@@ -26,7 +27,7 @@ const ProfilePhotos = () => {
     <Tab.Pane>
       <Grid>
         <Grid.Column width={16} style={{ paddingBotton: 0 }}>
-          <Header icon="image" floated="left">
+          <Header floated="left">
             Photos
           </Header>
           {isCurrentUser && (
@@ -54,6 +55,7 @@ const ProfilePhotos = () => {
                       <Button.Group fluid widths={2}>
                         <Button
                           name={photo.id}
+                          disabled={photo.isMain}
                           basic
                           loading={target === photo.id && loading}
                           positive
@@ -64,10 +66,16 @@ const ProfilePhotos = () => {
                           }}
                         />
                         <Button
+                          name={photo.id}
+                          disabled={photo.isMain}
+                          loading={targetDelete === photo.id && loading}
                           basic
                           negative
                           icon="trash"
-                          onClick={() => deletePhoto(photo.id)}
+                          onClick={(e) => {
+                            setTargetDelete(e.currentTarget.name);
+                            deletePhoto(photo);
+                          }}
                         />
                       </Button.Group>
                     )}
