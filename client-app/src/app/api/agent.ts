@@ -97,7 +97,10 @@ const Profiles = {
   setMainImage: (id: string) => 
     requests.post(`/photos/${id}/setmain`, {}),
   delete: (id: string) =>
-    requests.del(`/photos/${id}`)
+    requests.del(`/photos/${id}`),
+  updateProfile: (profile: Partial<IProfile>) => {
+    requests.put('/profiles', { displayName: profile.displayName, bio: profile.bio })
+  }
 };
 
 export default {
