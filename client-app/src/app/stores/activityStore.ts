@@ -6,6 +6,11 @@ import { history } from "../..";
 import { toast } from "react-toastify";
 import { RootStore } from "./rootStore";
 import { setActivityProps, createAttendee } from "../common/form/util/util";
+import {
+  HubConnection,
+  HubConnectionBuilder,
+  LogLevel
+} from "@microsoft/signalr";
 
 export default class ActivityStore {
   rootStore: RootStore;
@@ -20,6 +25,49 @@ export default class ActivityStore {
   @observable loading: boolean = false;
   @observable activity: IActivity | undefined;
   @observable submitting = false;
+  @observable.ref hubConnection: HubConnection | null = null;
+
+  @action createHubConnection = (activityId: string) => {
+    this.hubConnection = new HubConnectionBuilder()
+      .withUrl("http://localhost:5000/chat", {
+        accessTokenFactory: () => this.rootStore.commonStore.token!
+      })
+      .configureLogging(LogLevel.Information)
+      .build();
+    this.hubConnection
+      .start()
+      .then(() => console.log(this.hubConnection!.state!))
+      .then(() => {
+        console.log('Attempting to join group');
+        this.hubConnection!.invoke('AddToGroup', activityId);
+      })
+      .catch(error =>
+        console.log("Error establishing connection to SignalR: ", error)
+      );
+    this.hubConnection.on('ReceiveComment', comment => {
+      runInAction(() => {
+        this.activity!.comments.push(comment);
+      })
+    });
+    this.hubConnection!.on('Send', message => {
+      console.log(message);
+    });
+  };
+
+  @action stopHubConnection = () => {
+    this.hubConnection!.invoke('RemoveFromGroup', this.activity!.id)
+      .then(() => {this.hubConnection!.stop()});
+  }
+
+  @action addComment = async (values: any) => {
+    values.activityId = this.activity!.id;
+    try {
+      await this.hubConnection!.invoke("SendComment", values);
+    } catch (error) {
+      console.log(error);
+      toast.error("Problem adding comment.");
+    }
+  }
 
   @computed get activitiesByDate() {
     return this.groupActivitiesByDate(
@@ -109,6 +157,7 @@ export default class ActivityStore {
       let attendees = [];
       attendees.push(attendee);
       activity.attendees = attendees;
+      activity.comments = [];
       activity.isHost = true;
       runInAction("creating activity", () => {
         this.activitiesRegistry.set(activity.id, activity);
@@ -183,7 +232,7 @@ export default class ActivityStore {
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
   };
 
@@ -205,7 +254,7 @@ export default class ActivityStore {
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
   };
 }

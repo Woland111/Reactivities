@@ -15,7 +15,17 @@ export interface IActivity {
     venue: string,
     isHost: boolean,
     isGoing: boolean,
-    attendees: IAttendee[]
+    attendees: IAttendee[],
+    comments: IComment[]
+}
+
+export interface IComment {
+    id: string,
+    body: string,
+    createdAt: Date,
+    username: string,
+    image: string,
+    displayName: string
 }
 
 export interface IActivityFormValues extends Partial<IActivity> {
