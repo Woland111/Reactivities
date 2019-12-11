@@ -29,6 +29,7 @@ using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using Infrastructure.Photos;
 using API.SignalR;
+using Application.Profiles;
 
 namespace API
 {
@@ -107,6 +108,7 @@ namespace API
             services.AddScoped<IUserAccessor, UserAccessor>();
             services.Configure<CloudinarySettings>(Configuration.GetSection("Cloudinary"));
             services.AddScoped<IPhotoAccessor, PhotoAccessor>();
+            services.AddScoped<IProfileReader, ProfileReader>();
             
         }
 
