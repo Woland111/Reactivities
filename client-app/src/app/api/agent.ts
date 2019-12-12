@@ -103,8 +103,14 @@ const Profiles = {
   }
 };
 
+const Following = {
+  follow: (username: string) => requests.post(`/profiles/${username}/following`, {}),
+  unfollow: (username: string) => requests.del(`/profiles/${username}/following`)
+};
+
 export default {
   Activities,
   User,
-  Profiles
+  Profiles,
+  Following
 };

@@ -114,4 +114,40 @@ export default class ProfileStore {
       toast.error('Problem updating profile.');
     }
   }
+
+  @action follow = async (username: string) => {
+    this.loading = true;
+    try {
+      await agent.Following.follow(username);
+      runInAction(() => {
+        this.profile!.following = true;
+        this.profile!.followingCount++;
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error('Problem following.');
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
+  }
+
+  @action unfollow = async (username: string) => {
+    this.loading = true;
+    try {
+      await agent.Following.unfollow(username);
+      runInAction(() => {
+        this.profile!.following = false;
+        this.profile!.followingCount--;
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error('Problem following.');
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
+  }
 }

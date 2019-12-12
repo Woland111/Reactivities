@@ -29,9 +29,16 @@ namespace Application.Profiles
             {
                 throw new RestException(HttpStatusCode.NotFound, new { User = "Not found" });
             }
-            var userProfile = _mapper.Map<AppUser, UserProfileDto>(user);
-            userProfile.FollowersCount = user.Followers.Count;
-            userProfile.FollowingCount = user.Followings.Count;
+            var userProfile = new UserProfileDto 
+            {
+                DisplayName = user.DisplayName,
+                Username = user.DisplayName,
+                Image = user.Photos.FirstOrDefault(p => p.IsMain)?.Url,
+                Photos = user.Photos,
+                Bio = user.Bio,
+                FollowersCount = user.Followers.Count,
+                FollowingCount = user.Followings.Count
+            };
             var currentUser = await _dataContext.Users.SingleOrDefaultAsync(u => u.UserName == _userAccessor.GetCurrentUsername());
             userProfile.IsFollowed = user.Followers.Any(f => f.ObserverId == currentUser.Id);
             return userProfile;
