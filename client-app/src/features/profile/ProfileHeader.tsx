@@ -10,23 +10,34 @@ import {
   Reveal
 } from "semantic-ui-react";
 import { IProfile } from "../../app/models/profile";
+import { observer } from "mobx-react-lite";
 
 interface IProps {
   profile: IProfile;
-  isCurrentUser: boolean,
-  follow: (username: string) => void,
-  unfollow: (username: string) => void,
-  loading: boolean
+  isCurrentUser: boolean;
+  follow: (username: string) => void;
+  unfollow: (username: string) => void;
+  loading: boolean;
 }
 
-const ProfileHeader: React.FC<IProps> = ({ profile }) => {
+const ProfileHeader: React.FC<IProps> = ({
+  profile,
+  isCurrentUser,
+  follow,
+  unfollow,
+  loading
+}) => {
   return (
     <Segment>
       <Grid>
         <Grid.Column width={12}>
           <Item.Group>
             <Item>
-              <Item.Image avatar size="small" src={profile.image || "/assets/user.png"} />
+              <Item.Image
+                avatar
+                size="small"
+                src={profile.image || "/assets/user.png"}
+              />
               <Item.Content verticalAlign="middle">
                 <Header as="h1">{profile.displayName}</Header>
               </Item.Content>
@@ -38,24 +49,36 @@ const ProfileHeader: React.FC<IProps> = ({ profile }) => {
             <Statistic label="Followers" value={profile.followersCount} />
             <Statistic label="Following" value={profile.followingCount} />
           </Statistic.Group>
-          <Divider />``
-          <Reveal animated="move">
-            <Reveal.Content visible style={{ width: "100%" }}>
-              <Button fluid color="teal" content="Following" />
-            </Reveal.Content>
-            <Reveal.Content hidden>
-              <Button
-                fluid
-                basic
-                color={true ? "red" : "green"}
-                content={true ? "Unfollow" : "Follow"}
-              />
-            </Reveal.Content>
-          </Reveal>
+          <Divider />
+          ``
+          {!isCurrentUser && (
+            <Reveal animated="move">
+              <Reveal.Content visible style={{ width: "100%" }}>
+                <Button
+                  fluid
+                  color="teal"
+                  content={profile.following ? "Following" : "Not following"}
+                />
+              </Reveal.Content>
+              <Reveal.Content hidden>
+                <Button
+                  fluid
+                  basic
+                  color={profile.following ? "red" : "green"}
+                  content={profile.following ? "Unfollow" : "Follow"}
+                  onClick={
+                    profile.following
+                      ? () => unfollow(profile.username)
+                      : () => follow(profile.username)
+                  }
+                />
+              </Reveal.Content>
+            </Reveal>
+          )}
         </Grid.Column>
       </Grid>
     </Segment>
   );
 };
 
-export default ProfileHeader;
+export default observer(ProfileHeader);

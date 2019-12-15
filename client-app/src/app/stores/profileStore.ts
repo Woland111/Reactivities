@@ -15,6 +15,7 @@ export default class ProfileStore {
   @observable loadingProfile = true;
   @observable uploadingPhoto = false;
   @observable loading = false;
+  @observable followings: IProfile[] = [];
 
   @computed get isCurrentUser() {
     if (this.rootStore.userStore.user && this.profile) {
@@ -30,6 +31,8 @@ export default class ProfileStore {
       var profile = await agent.Profiles.get(username);
       runInAction(() => {
         this.profile = profile;
+        console.log(username);
+        console.log(profile);
       });
     } catch (error) {
       console.log(error);
@@ -148,6 +151,23 @@ export default class ProfileStore {
       runInAction(() => {
         this.loading = false;
       });
+    }
+  }
+
+  @action loadFollowings = async (predicate: string) => {
+    this.loading = true;
+    try {
+      const profiles = await agent.Following.listFollowings(this.profile!.username, predicate);
+      runInAction(() => {
+        this.followings = profiles;
+      })
+    } catch (error) {
+      toast.error(error);
+      console.log(error);
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      })
     }
   }
 }
