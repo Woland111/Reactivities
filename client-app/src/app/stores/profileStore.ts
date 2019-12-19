@@ -1,5 +1,5 @@
 import { RootStore } from "./rootStore";
-import { observable, runInAction, action, computed } from "mobx";
+import { observable, runInAction, action, computed, reaction } from "mobx";
 import { IProfile, IPhoto } from "../models/profile";
 import agent from "../api/agent";
 import { toast } from "react-toastify";
@@ -9,6 +9,16 @@ export default class ProfileStore {
   rootStore: RootStore;
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
+    reaction(
+      () => this.activeTab,
+      activeTab => {
+        if (activeTab === 3 || activeTab === 4) {
+          this.loadFollowings(activeTab === 3 ? 'followers': 'following')
+        } else {
+          this.followings = [];
+        }
+      }
+    );
   }
 
   @observable profile: IProfile | null = null;
@@ -16,6 +26,7 @@ export default class ProfileStore {
   @observable uploadingPhoto = false;
   @observable loading = false;
   @observable followings: IProfile[] = [];
+  @observable activeTab: number = 0;
 
   @computed get isCurrentUser() {
     if (this.rootStore.userStore.user && this.profile) {
@@ -25,14 +36,17 @@ export default class ProfileStore {
     }
   }
 
+  @action setActiveTab = (activeIndex: number) => {
+    this.activeTab = activeIndex;
+  };
+
   @action loadProfile = async (username: string) => {
     this.loadingProfile = true;
     try {
       var profile = await agent.Profiles.get(username);
+      console.log(profile);
       runInAction(() => {
         this.profile = profile;
-        console.log(username);
-        console.log(profile);
       });
     } catch (error) {
       console.log(error);
@@ -75,48 +89,52 @@ export default class ProfileStore {
         this.profile!.photos.find(p => p.isMain)!.isMain = false;
         this.profile!.photos.find(p => p.id === photo.id)!.isMain = true;
         this.profile!.image = photo.url;
-      })
+      });
     } catch (error) {
       console.log(error);
       toast.error("Problem setting main photo.");
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
-  }
+  };
 
   @action deletePhoto = async (photo: IPhoto) => {
     this.loading = true;
     try {
       await agent.Profiles.delete(photo.id);
       runInAction(() => {
-        this.profile!.photos = this.profile!.photos.filter(p => p.id !== photo.id);
-      })
+        this.profile!.photos = this.profile!.photos.filter(
+          p => p.id !== photo.id
+        );
+      });
     } catch (error) {
       console.log(error);
       toast.error("Problem deleting a photo.");
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
-  }
+  };
 
   @action updateProfile = async (profile: Partial<IProfile>) => {
     try {
       await agent.Profiles.updateProfile(profile);
       runInAction(() => {
-        if (profile.displayName !== this.rootStore.userStore.user!.displayName) {
+        if (
+          profile.displayName !== this.rootStore.userStore.user!.displayName
+        ) {
           this.rootStore.userStore.user!.displayName = profile.displayName!;
         }
-        this.profile = {...this.profile!, ...profile};
-      })
+        this.profile = { ...this.profile!, ...profile };
+      });
     } catch (error) {
       console.log(error);
-      toast.error('Problem updating profile.');
+      toast.error("Problem updating profile.");
     }
-  }
+  };
 
   @action follow = async (username: string) => {
     this.loading = true;
@@ -128,13 +146,13 @@ export default class ProfileStore {
       });
     } catch (error) {
       console.log(error);
-      toast.error('Problem following.');
+      toast.error("Problem following.");
     } finally {
       runInAction(() => {
         this.loading = false;
       });
     }
-  }
+  };
 
   @action unfollow = async (username: string) => {
     this.loading = true;
@@ -146,28 +164,31 @@ export default class ProfileStore {
       });
     } catch (error) {
       console.log(error);
-      toast.error('Problem following.');
+      toast.error("Problem following.");
     } finally {
       runInAction(() => {
         this.loading = false;
       });
     }
-  }
+  };
 
   @action loadFollowings = async (predicate: string) => {
     this.loading = true;
     try {
-      const profiles = await agent.Following.listFollowings(this.profile!.username, predicate);
+      const profiles = await agent.Following.listFollowings(
+        this.profile!.username.toLowerCase(),
+        predicate
+      );
       runInAction(() => {
         this.followings = profiles;
-      })
+      });
     } catch (error) {
       toast.error(error);
       console.log(error);
     } finally {
       runInAction(() => {
         this.loading = false;
-      })
+      });
     }
-  }
+  };
 }
