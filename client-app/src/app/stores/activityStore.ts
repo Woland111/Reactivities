@@ -1,4 +1,4 @@
-import { observable, action, computed, runInAction } from "mobx";
+import { observable, action, computed, runInAction, reaction } from "mobx";
 import { SyntheticEvent } from "react";
 import { IActivity } from "../models/activity";
 import agent from "../api/agent";
@@ -12,11 +12,21 @@ import {
   LogLevel
 } from "@microsoft/signalr";
 
+const LIMIT = 2;
+
 export default class ActivityStore {
   rootStore: RootStore;
 
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
+    reaction(
+      () => this.predicate.keys,
+      () => {
+        this.page = 0;
+        this.activitiesRegistry.clear();
+        this.loadActivities();
+      }
+    );
   }
 
   @observable target: string = "";
@@ -26,6 +36,38 @@ export default class ActivityStore {
   @observable activity: IActivity | undefined;
   @observable submitting = false;
   @observable.ref hubConnection: HubConnection | null = null;
+  @observable page = 0;
+  @observable activityCount = 0;
+  @observable predicate = new Map();
+
+  @action setPredicate = (predicate: string, value: string | Date) => {
+    this.predicate.clear();
+    if (predicate != "all") {
+      this.predicate.set(predicate, value);
+    }
+  };
+
+  @computed get axiosParams() {
+    const params = new URLSearchParams();
+    params.append("limit", String(LIMIT));
+    params.append("offset", `${this.page ? this.page * LIMIT : 0}`);
+    this.predicate.forEach((value, key) => {
+      if (key === "startDate") {
+        params.append(key, value.toISOString());
+      } else {
+        params.append(key, value);
+      }
+    });
+    return params;
+  }
+
+  @computed get totalPages() {
+    return Math.ceil(this.activityCount / LIMIT);
+  }
+
+  @action setPage = (page: number) => {
+    this.page = page;
+  };
 
   @action createHubConnection = (activityId: string) => {
     this.hubConnection = new HubConnectionBuilder()
@@ -38,26 +80,29 @@ export default class ActivityStore {
       .start()
       .then(() => console.log(this.hubConnection!.state!))
       .then(() => {
-        console.log('Attempting to join group');
-        this.hubConnection!.invoke('AddToGroup', activityId);
+        console.log("Attempting to join group");
+        this.hubConnection!.invoke("AddToGroup", activityId);
       })
       .catch(error =>
         console.log("Error establishing connection to SignalR: ", error)
       );
-    this.hubConnection.on('ReceiveComment', comment => {
+    this.hubConnection.on("ReceiveComment", comment => {
       runInAction(() => {
         this.activity!.comments.push(comment);
-      })
+      });
     });
-    this.hubConnection!.on('Send', message => {
+    this.hubConnection!.on("Send", message => {
       console.log(message);
     });
   };
 
   @action stopHubConnection = () => {
-    this.hubConnection!.invoke('RemoveFromGroup', this.activity!.id)
-      .then(() => {this.hubConnection!.stop()});
-  }
+    this.hubConnection!.invoke("RemoveFromGroup", this.activity!.id).then(
+      () => {
+        this.hubConnection!.stop();
+      }
+    );
+  };
 
   @action addComment = async (values: any) => {
     values.activityId = this.activity!.id;
@@ -67,7 +112,7 @@ export default class ActivityStore {
       console.log(error);
       toast.error("Problem adding comment.");
     }
-  }
+  };
 
   @computed get activitiesByDate() {
     return this.groupActivitiesByDate(
@@ -93,8 +138,10 @@ export default class ActivityStore {
     this.loadingInitial = true;
     const user = this.rootStore.userStore.user!;
     try {
-      const activities = await agent.Activities.list();
+      const activitiesEnvelope = await agent.Activities.list(this.axiosParams);
+      const { activities, activityCount } = activitiesEnvelope;
       runInAction("loading activities", () => {
+        this.activityCount = activityCount;
         activities.forEach(activity => {
           activity.date = new Date(activity.date);
           activity.isGoing = activity.attendees.some(
