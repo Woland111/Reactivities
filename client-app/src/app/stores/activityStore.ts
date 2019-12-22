@@ -20,7 +20,7 @@ export default class ActivityStore {
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
     reaction(
-      () => this.predicate.keys,
+      () => this.predicate.keys(),
       () => {
         this.page = 0;
         this.activitiesRegistry.clear();
