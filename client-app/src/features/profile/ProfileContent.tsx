@@ -1,29 +1,30 @@
-import React from 'react'
-import { Tab } from 'semantic-ui-react'
-import ProfilePhotos from './ProfilePhotos'
-import ProfileDescription from './ProfileDescription'
-import ProfileFollowings from './ProfileFollowings'
-import { setActivityProps } from '../../app/common/form/util/util'
+import React from "react";
+import { Tab } from "semantic-ui-react";
+import ProfilePhotos from "./ProfilePhotos";
+import ProfileDescription from "./ProfileDescription";
+import ProfileFollowings from "./ProfileFollowings";
+import { setActivityProps } from "../../app/common/form/util/util";
+import ProfileActivities from "./ProfileActivities";
 
 const panes = [
-{menuItem: 'About', render: () => <ProfileDescription />},
-    {menuItem: 'Photos', render: () => <ProfilePhotos />},
-    {menuItem: 'Activities', render: () => <Tab.Pane>This is activities</Tab.Pane>},
-    {menuItem: 'Followers', render: () => <ProfileFollowings/>},
-    {menuItem: 'Following', render: () => <ProfileFollowings/>}
-]
+  { menuItem: "About", render: () => <ProfileDescription /> },
+  { menuItem: "Photos", render: () => <ProfilePhotos /> },
+  { menuItem: "Activities", render: () => <ProfileActivities /> },
+  { menuItem: "Followers", render: () => <ProfileFollowings /> },
+  { menuItem: "Following", render: () => <ProfileFollowings /> }
+];
 
 interface IProps {
-    setActiveTab: (activeIndex: any) => void 
+  setActiveTab: (activeIndex: any) => void;
 }
 
-export const ProfileContent: React.FC<IProps> = ({setActiveTab}) => {
-    return (
-        <Tab 
-            menu={{ fluid: true, vertical: true }}
-            menuPosition="right"
-            panes={panes}
-            onTabChange={(e, data) => setActiveTab(data.activeIndex)}
-        />
-    )
-}
+export const ProfileContent: React.FC<IProps> = ({ setActiveTab }) => {
+  return (
+    <Tab
+      menu={{ fluid: true, vertical: true }}
+      menuPosition="right"
+      panes={panes}
+      onTabChange={(e, data) => setActiveTab(data.activeIndex)}
+    />
+  );
+};

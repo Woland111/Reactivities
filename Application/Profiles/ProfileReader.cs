@@ -32,7 +32,7 @@ namespace Application.Profiles
             var userProfile = new UserProfileDto 
             {
                 DisplayName = user.DisplayName,
-                Username = user.DisplayName,
+                Username = user.UserName,
                 Image = user.Photos.FirstOrDefault(p => p.IsMain)?.Url,
                 Photos = user.Photos,
                 Bio = user.Bio,

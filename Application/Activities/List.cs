@@ -60,7 +60,7 @@ namespace Application.Activities
                     queryable = queryable.Where(a => a.UserActivities.Any(ua => ua.AppUser.UserName == _userAccessor.GetCurrentUsername()));
                 }
 
-                if (!request.IsHost && request.IsHost)
+                if (!request.IsGoing && request.IsHost)
                 {
                     queryable = queryable.Where(a => a.UserActivities.Any(ua => ua.AppUser.UserName == _userAccessor.GetCurrentUsername() && ua.IsHost));
                 }
