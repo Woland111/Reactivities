@@ -2,9 +2,11 @@ import { IActivity, IAttendee } from "../../../models/activity";
 import { IUser } from "../../../models/user";
 
 export const combinedDateAndTime = (date: Date, time: Date) => {
-  let timeString = `${time.getHours()}:${time.getMinutes()}:00`;
-  let dateString = `${date.getFullYear()}-${date.getMonth() +
-    1}-${date.getDate()}`;
+  // let timeString = `${time.getHours()}:${time.getMinutes()}:00`;
+  // let dateString = `${date.getFullYear()}-${date.getMonth() +
+    // 1}-${date.getDate()}`;
+  const dateString = date.toISOString().split('T')[0];
+  const timeString = time.toISOString().split('T')[1];
   return new Date(`${dateString} ${timeString}`);
 };
 

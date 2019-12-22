@@ -6,7 +6,7 @@ import { IUser, IUserFormValues } from "../models/user";
 import { IProfile, IPhoto } from "../models/profile";
 import { request } from "http";
 
-axios.defaults.baseURL = "http://localhost:5000/api";
+axios.defaults.baseURL = process.env.REACT_APP_API_URL;
 
 axios.interceptors.request.use(
   config => {
@@ -23,12 +23,16 @@ axios.interceptors.response.use(undefined, error => {
   if (error.message === "Network Error" && !error.response) {
     toast.error("Network error!");
   }
-  const { status, config, data } = error.response;
+  const { status, config, data, headers } = error.response;
   if (
     status === 404 ||
     (status === 400 && config.method === "get" && data.errors["id"])
   ) {
     history.push("/notfound");
+  } else if (status === 401 && headers['www-authenticate'] === 'Bearer error="invalid_token", error_description="The token is expired"') {
+    window.localStorage.removeItem('jwt');
+    history.push('/');
+    toast.error("Your session has expired - please log in again.");
   } else if (status === 500) {
     toast.error("Uuuggh");
   }
@@ -37,31 +41,22 @@ axios.interceptors.response.use(undefined, error => {
 
 const responseBody = (response: AxiosResponse) => response.data;
 
-const sleep = (ms: number) => (response: AxiosResponse) =>
-  new Promise<AxiosResponse>(resolve =>
-    setTimeout(() => resolve(response), ms)
-  );
-
 const requests = {
   get: (url: string) =>
     axios
       .get(url)
-      .then(sleep(1000))
       .then(responseBody),
   post: (url: string, body: {}) =>
     axios
       .post(url, body)
-      .then(sleep(1000))
       .then(responseBody),
   put: (url: string, body: {}) =>
     axios
       .put(url, body)
-      .then(sleep(1000))
       .then(responseBody),
   del: (url: string) =>
     axios
       .delete(url)
-      .then(sleep(1000))
       .then(responseBody),
   postForm: (url: string, file: Blob) => {
     const formData = new FormData();
@@ -76,7 +71,7 @@ const requests = {
 
 const Activities = {
   list: (params: URLSearchParams): Promise<IActivitiesEnvelope> =>
-    axios.get('/activities', {params: params}).then(sleep(1000)).then(responseBody),
+    axios.get('/activities', {params: params}).then(responseBody),
   details: (id: string): Promise<IActivity> =>
     requests.get(`/activities/${id}`),
   create: (activity: IActivity) => requests.post("/activities", activity),
