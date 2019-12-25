@@ -42,6 +42,26 @@ namespace API
 
         public IConfiguration Configuration { get; }
 
+        public void ConfigureDevelopmentServices(IServiceCollection services)
+        {
+            services.AddDbContext<DataContext>(opt =>
+                        {
+                            opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
+                            opt.UseLazyLoadingProxies();
+                        });
+            ConfigureServices(services);
+        }
+
+        public void ConfigureProductionServices(IServiceCollection services)
+        {
+            services.AddDbContext<DataContext>(opt =>
+                        {
+                            opt.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
+                            opt.UseLazyLoadingProxies();
+                        });
+            ConfigureServices(services);
+        }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -52,11 +72,6 @@ namespace API
             })
                 .AddFluentValidation(cfg => cfg.RegisterValidatorsFromAssemblyContaining<Create>())
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            services.AddDbContext<DataContext>(opt =>
-            {
-                opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
-                opt.UseLazyLoadingProxies();
-            });
             services.AddCors(opt =>
             {
                 opt.AddPolicy("CorsPolicy", policy =>
@@ -72,15 +87,17 @@ namespace API
             identityBuilder.AddEntityFrameworkStores<DataContext>();
             identityBuilder.AddSignInManager<SignInManager<AppUser>>();
 
-            services.AddAuthorization(opt => 
+            services.AddAuthorization(opt =>
             {
-                opt.AddPolicy("IsHostPolicy", p => {
+                opt.AddPolicy("IsHostPolicy", p =>
+                {
                     p.Requirements.Add(new IsHostRequirement());
                 });
             });
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(opt => {
+                .AddJwtBearer(opt =>
+                {
                     opt.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
@@ -92,7 +109,7 @@ namespace API
                     };
                     opt.Events = new JwtBearerEvents
                     {
-                        OnMessageReceived = context => 
+                        OnMessageReceived = context =>
                         {
                             var accessToken = context.Request.Query["access_token"];
                             var path = context.HttpContext.Request.Path;
@@ -111,7 +128,7 @@ namespace API
             services.Configure<CloudinarySettings>(Configuration.GetSection("Cloudinary"));
             services.AddScoped<IPhotoAccessor, PhotoAccessor>();
             services.AddScoped<IProfileReader, ProfileReader>();
-            
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -135,8 +152,9 @@ namespace API
             app.UseAuthentication();
             app.UseCors("CorsPolicy");
             app.UseMvc();
-            app.UseSignalR(routes => {
-               routes.MapHub<ChatHub>("/chat");
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<ChatHub>("/chat");
             });
         }
     }
