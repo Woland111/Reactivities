@@ -30,6 +30,7 @@ using AutoMapper;
 using Infrastructure.Photos;
 using API.SignalR;
 using Application.Profiles;
+using Microsoft.Extensions.Hosting;
 
 namespace API
 {
@@ -65,13 +66,12 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(opt =>
+            services.AddControllers(opt =>
             {
                 var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
                 opt.Filters.Add(new AuthorizeFilter(policy));
             })
-                .AddFluentValidation(cfg => cfg.RegisterValidatorsFromAssemblyContaining<Create>())
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+                .AddFluentValidation(cfg => cfg.RegisterValidatorsFromAssemblyContaining<Create>());
             services.AddCors(opt =>
             {
                 opt.AddPolicy("CorsPolicy", policy =>
@@ -132,7 +132,7 @@ namespace API
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseMiddleware<ErrorHandlingMiddleware>();
             if (env.IsDevelopment())
@@ -159,17 +159,23 @@ namespace API
                 .ScriptSources(s => s.Self().CustomSources("sha256-EWcbgMMrMgeuxsyT4o76Gq/C5zilrLxiq6oTo2KDqus="))
                 );
 
+            // app.UseHttpsRedirection();
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
-            // app.UseHttpsRedirection();
-            app.UseAuthentication();
+            app.UseRouting();
             app.UseCors("CorsPolicy");
-            app.UseMvc();
-            app.UseSignalR(routes =>
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints => 
             {
-                routes.MapHub<ChatHub>("/chat");
+                endpoints.MapControllers();
+                endpoints.MapHub<ChatHub>("/chat");
+                endpoints.MapFallbackToController("Index", "Fallback");
             });
+            
         }
     }
 }

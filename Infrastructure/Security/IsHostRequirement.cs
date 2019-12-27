@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 using System;
+using System.Linq;
 
 namespace Infrastructure.Security
 {
@@ -28,7 +29,7 @@ namespace Infrastructure.Security
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, IsHostRequirement requirement)
         {
             var user = _context.Users.SingleOrDefaultAsync(u => u.UserName == _userAccessor.GetCurrentUsername()).Result;
-            var activityId = Guid.Parse(((AuthorizationFilterContext)(context.Resource)).RouteData.Values["id"].ToString());
+            var activityId = Guid.Parse(_httpContextAccessor.HttpContext.Request.RouteValues.SingleOrDefault(x => x.Key == "id").Value.ToString());
             var attendance = _context.UserActivity.SingleOrDefaultAsync(ua => ua.AppUserId == user.Id && ua.ActivityId == activityId && ua.IsHost);
             if (attendance != null) 
             {
