@@ -58,4 +58,8 @@ export default class UserStore {
       throw error;
     }
   }
+
+  @action fclogin = async (response: any) => {
+    console.log(response);
+  }
 }
