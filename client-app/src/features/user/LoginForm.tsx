@@ -8,10 +8,11 @@ import { FORM_ERROR } from "final-form";
 import { combineValidators, isRequired } from "revalidate";
 import ErrorMessage from "../../app/common/form/ErrorMessage";
 import { SocialLogin } from "./SocialLogin";
+import { observer } from "mobx-react-lite";
 
 const LoginForm = () => {
   const rootStore = useContext(RootStoreContext);
-  const { login, fclogin } = rootStore.userStore;
+  const { login, fclogin, loading } = rootStore.userStore;
   return (
     <FinalForm
       validate={combineValidators({
@@ -60,11 +61,11 @@ const LoginForm = () => {
             fluid
           />
            <Divider horizontal>OR</Divider>
-           <SocialLogin fbCallback={fclogin} />
+           <SocialLogin loading={loading} fbCallback={fclogin} />
         </Form>
       )}
     />
   );
 };
 
-export default LoginForm;
+export default observer(LoginForm);

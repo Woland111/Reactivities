@@ -12,6 +12,7 @@ export default class UserStore {
   }
   
   @observable user: IUser | null = null;
+  @observable loading = false;
 
   @computed get isLoggedIn() {
     return !!this.user;
@@ -60,6 +61,21 @@ export default class UserStore {
   }
 
   @action fclogin = async (response: any) => {
-    console.log(response);
+    this.loading = true;
+    try {
+      const user = await agent.User.fblogin(response.accessToken);
+      runInAction(() => {
+        this.user = user;
+        this.rootStore.commonStore.setToken(user.token);
+        this.rootStore.modalStore.closeModal();
+      });
+      history.push('/activities');
+    } catch (error) {
+      throw error;
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      });
+    }
   }
 }
