@@ -29,9 +29,13 @@ axios.interceptors.response.use(undefined, error => {
     (status === 400 && config.method === "get" && data.errors["id"])
   ) {
     history.push("/notfound");
-  } else if (status === 401 && headers['www-authenticate'] === 'Bearer error="invalid_token", error_description="The token is expired"') {
-    window.localStorage.removeItem('jwt');
-    history.push('/');
+  } else if (
+    status === 401 &&
+    headers["www-authenticate"] ===
+      'Bearer error="invalid_token", error_description="The token is expired"'
+  ) {
+    window.localStorage.removeItem("jwt");
+    history.push("/");
     toast.error("Your session has expired - please log in again.");
   } else if (status === 500) {
     toast.error("Uuuggh");
@@ -42,22 +46,10 @@ axios.interceptors.response.use(undefined, error => {
 const responseBody = (response: AxiosResponse) => response.data;
 
 const requests = {
-  get: (url: string) =>
-    axios
-      .get(url)
-      .then(responseBody),
-  post: (url: string, body: {}) =>
-    axios
-      .post(url, body)
-      .then(responseBody),
-  put: (url: string, body: {}) =>
-    axios
-      .put(url, body)
-      .then(responseBody),
-  del: (url: string) =>
-    axios
-      .delete(url)
-      .then(responseBody),
+  get: (url: string) => axios.get(url).then(responseBody),
+  post: (url: string, body: {}) => axios.post(url, body).then(responseBody),
+  put: (url: string, body: {}) => axios.put(url, body).then(responseBody),
+  del: (url: string) => axios.delete(url).then(responseBody),
   postForm: (url: string, file: Blob) => {
     const formData = new FormData();
     formData.append("File", file);
@@ -71,7 +63,7 @@ const requests = {
 
 const Activities = {
   list: (params: URLSearchParams): Promise<IActivitiesEnvelope> =>
-    axios.get('/activities', {params: params}).then(responseBody),
+    axios.get("/activities", { params: params }).then(responseBody),
   details: (id: string): Promise<IActivity> =>
     requests.get(`/activities/${id}`),
   create: (activity: IActivity) => requests.post("/activities", activity),
@@ -87,7 +79,9 @@ const User = {
   login: (user: IUserFormValues): Promise<IUser> =>
     requests.post("/user/login", user),
   register: (user: IUserFormValues): Promise<IUser> =>
-    requests.post("/user/register", user)
+    requests.post("/user/register", user),
+  fblogin: (accessToken: string) =>
+    requests.post("/user/facebook", { accessToken })
 };
 
 const Profiles = {
@@ -103,7 +97,7 @@ const Profiles = {
       bio: profile.bio
     });
   },
-  getActivities: (username: string, predicate: string) => 
+  getActivities: (username: string, predicate: string) =>
     requests.get(`/profiles/${username}/activities?predicate=${predicate}`)
 };
 
